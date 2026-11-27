@@ -19,7 +19,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 public class PantallaPrincipal extends BorderPane{
 
@@ -30,9 +32,11 @@ public class PantallaPrincipal extends BorderPane{
     private String columnaSeleccionada="spotify_track_popularity";
     private VBox headerSeleccionado=null;
     private Label lblSeleccionado=null;
+    private List<Cancion> ordenOriginal;
 
     public PantallaPrincipal(){
         manejador=new ManejadorDatos();
+        ordenOriginal=new ArrayList<>(manejador.getCanciones());
 
         HBox barraSuperior=new HBox(12);
         barraSuperior.setPadding(new Insets(10));
@@ -52,15 +56,15 @@ public class PantallaPrincipal extends BorderPane{
             checksBox.getChildren().add(checks[i]);
         }
 
-        Button btnOrdenar=new Button("Ordenar");
-        btnOrdenar.setStyle("-fx-background-color:#0f3460; -fx-text-fill:white; -fx-padding:6 14;");
-        btnOrdenar.setOnAction(e->ordenar());
+        Button btnOrdenarMedir=new Button("Ordenar y medir");
+        btnOrdenarMedir.setStyle("-fx-background-color:#0f3460; -fx-text-fill:white; -fx-padding:6 14;");
+        btnOrdenarMedir.setOnAction(e->ordenarYMedir());
 
-        Button btnGrafica=new Button("Ver tiempos");
-        btnGrafica.setStyle("-fx-background-color:#e94560; -fx-text-fill:white; -fx-padding:6 14;");
-        btnGrafica.setOnAction(e->mostrarGraficaTiempos());
+        Button btnRestaurar=new Button("Restaurar");
+        btnRestaurar.setStyle("-fx-background-color:#2d6a4f; -fx-text-fill:white; -fx-padding:6 14;");
+        btnRestaurar.setOnAction(e->restaurar());
 
-        barraSuperior.getChildren().addAll(lblTitulo,checksBox,btnOrdenar,btnGrafica);
+        barraSuperior.getChildren().addAll(lblTitulo,checksBox,btnOrdenarMedir,btnRestaurar);
 
         tabla=new TableView<>();
         tabla.setStyle("-fx-background-color:#0f0f23;");
@@ -75,6 +79,12 @@ public class PantallaPrincipal extends BorderPane{
         this.setCenter(tabla);
         this.setBottom(lblEstado);
         this.setStyle("-fx-background-color:#0f0f23;");
+    }
+
+    private void restaurar(){
+        tabla.getItems().clear();
+        tabla.getItems().addAll(ordenOriginal);
+        actualizarEstado("Orden original restaurado");
     }
 
     private void crearColumnas(){
@@ -115,7 +125,7 @@ public class PantallaPrincipal extends BorderPane{
                 lblRef.setStyle("-fx-font-weight:bold; -fx-font-size:10px; -fx-text-fill:white;");
                 headerSeleccionado=headerRef;
                 lblSeleccionado=lblRef;
-                actualizarEstado();
+                actualizarEstado("Columna: "+columnaSeleccionada);
             });
 
             header.getChildren().addAll(lblNombre,zonaGrafica);
@@ -125,9 +135,9 @@ public class PantallaPrincipal extends BorderPane{
         }
     }
 
-    private void actualizarEstado(){
+    private void actualizarEstado(String texto){
         Label lbl=((Label)this.getBottom());
-        lbl.setText("Canciones: "+manejador.getCanciones().size()+" | Columna: "+columnaSeleccionada);
+        lbl.setText("Canciones: "+manejador.getCanciones().size()+" | "+texto);
     }
 
     private void mostrarZoomGrafica(String columna){
@@ -300,16 +310,19 @@ public class PantallaPrincipal extends BorderPane{
 
     private double obtenerNumerico(Cancion c,String col){
         switch(col){
+            case "spotify_track_duration_ms": return c.getDuration();
             case "danceability": return c.getDanceability();
             case "energy": return c.getEnergy();
             case "key": return c.getKey();
             case "loudness": return c.getLoudness();
+            case "mode": return c.getMode();
             case "speechiness": return c.getSpeechiness();
             case "acousticness": return c.getAcousticness();
             case "instrumentalness": return c.getInstrumentalness();
             case "liveness": return c.getLiveness();
             case "valence": return c.getValence();
             case "tempo": return c.getTempo();
+            case "time_signature": return c.getTimeSignature();
             case "spotify_track_popularity": return c.getPopularity();
             case "peak_position": return c.getPeakPosition();
             case "weeks_on_chart": return c.getWeeksOnChart();
@@ -318,24 +331,31 @@ public class PantallaPrincipal extends BorderPane{
         }
     }
 
-    private void ordenar(){
-        if(columnaSeleccionada==null) return;
-        Comparator<Cancion> comp=Comparator.comparingDouble(c->obtenerNumerico(c,columnaSeleccionada));
-        Cancion[] copia=manejador.getCanciones().toArray(new Cancion[0]);
-        Ordenamientos.quickSort(copia,0,copia.length-1,comp);
-        tabla.getItems().clear();
-        tabla.getItems().addAll(copia);
-    }
-
-    private void mostrarGraficaTiempos(){
+    private void ordenarYMedir(){
         if(columnaSeleccionada==null){
             mostrarAlerta("Selecciona una columna (clic en el nombre)");
             return;
         }
+
+        boolean alguno=false;
+        for(CheckBox check:checks){
+            if(check.isSelected()) alguno=true;
+        }
+        if(!alguno){
+            mostrarAlerta("Selecciona al menos un algoritmo");
+            return;
+        }
+
+        int totalReal=manejador.getCanciones().size();
+        int limite=Math.min(4000,totalReal);
+        Cancion[] muestra=manejador.getCanciones().subList(0,limite).toArray(new Cancion[0]);
         Comparator<Cancion> comp=Comparator.comparingDouble(c->obtenerNumerico(c,columnaSeleccionada));
 
-        Stage stage=new Stage();
-        stage.setTitle("Tiempos - "+columnaSeleccionada);
+        Cancion[] ordenada=muestra.clone();
+        Ordenamientos.quickSort(ordenada,0,ordenada.length-1,comp);
+        tabla.getItems().clear();
+        tabla.getItems().addAll(ordenada);
+        actualizarEstado("Ordenado por "+columnaSeleccionada+" (mostrando "+limite+" de "+totalReal+")");
 
         CategoryAxis xAxis=new CategoryAxis();
         NumberAxis yAxis=new NumberAxis();
@@ -346,26 +366,19 @@ public class PantallaPrincipal extends BorderPane{
         chart.setPrefHeight(300);
 
         XYChart.Series<String,Number> serie=new XYChart.Series<>();
-
         StringBuilder sb=new StringBuilder();
-        sb.append("Resultados para: ").append(columnaSeleccionada).append("\n\n");
+        sb.append("Resultados para: ").append(columnaSeleccionada).append("\n");
+        sb.append("Total: ").append(totalReal).append(" canciones\n\n");
         sb.append(String.format("%-20s %15s %12s\n","Método","Nanosegundos","Milisegundos"));
         sb.append("\n");
 
-        boolean alguno=false;
         for(int i=0;i<checks.length;i++){
             if(checks[i].isSelected()){
-                alguno=true;
-                long nano=medirTiempoNano(algoritmos[i],comp);
+                long nano=medirTiempoNano(algoritmos[i],comp,muestra);
                 double ms=nano/1_000_000.0;
                 serie.getData().add(new XYChart.Data<>(algoritmos[i],ms));
                 sb.append(String.format("%-20s %15d %12.2f\n",algoritmos[i],nano,ms));
             }
-        }
-
-        if(!alguno){
-            mostrarAlerta("Selecciona al menos un algoritmo");
-            return;
         }
 
         chart.getData().add(serie);
@@ -379,12 +392,14 @@ public class PantallaPrincipal extends BorderPane{
         box.setPadding(new Insets(15));
         VBox.setVgrow(chart,Priority.ALWAYS);
 
+        Stage stage=new Stage();
+        stage.setTitle("Tiempos - "+columnaSeleccionada);
         stage.setScene(new Scene(box,700,550));
         stage.show();
     }
 
-    private long medirTiempoNano(String algoritmo,Comparator<Cancion> comparador){
-        Cancion[] copia=manejador.getCanciones().toArray(new Cancion[0]);
+    private long medirTiempoNano(String algoritmo,Comparator<Cancion> comparador,Cancion[] datos){
+        Cancion[] copia=datos.clone();
         long inicio=System.nanoTime();
         switch(algoritmo){
             case "QuickSort":

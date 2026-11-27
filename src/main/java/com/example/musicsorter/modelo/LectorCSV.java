@@ -17,8 +17,7 @@ public class LectorCSV{
 
             String linea;
             br.readLine();
-            int contador=0;
-            while((linea=br.readLine())!=null && contador<3000){
+            while((linea=br.readLine())!=null){
                 String[] c=linea.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
                 if(c.length>=33){
                     try{
@@ -32,7 +31,6 @@ public class LectorCSV{
                                 parseDouble(c[21]),parseDouble(c[22]),parseDouble(c[23]),
                                 c[24],c[25],c[26],c[27],c[28],c[29],c[30],c[31],parseDouble(c[32])
                         ));
-                        contador++;
                     }catch(Exception ignored){}
                 }
             }
