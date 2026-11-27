@@ -347,15 +347,14 @@ public class PantallaPrincipal extends BorderPane{
         }
 
         int totalReal=manejador.getCanciones().size();
-        int limite=Math.min(4000,totalReal);
-        Cancion[] muestra=manejador.getCanciones().subList(0,limite).toArray(new Cancion[0]);
+        Cancion[] muestra=manejador.getCanciones().toArray(new Cancion[0]);
         Comparator<Cancion> comp=Comparator.comparingDouble(c->obtenerNumerico(c,columnaSeleccionada));
 
         Cancion[] ordenada=muestra.clone();
         Ordenamientos.quickSort(ordenada,0,ordenada.length-1,comp);
         tabla.getItems().clear();
         tabla.getItems().addAll(ordenada);
-        actualizarEstado("Ordenado por "+columnaSeleccionada+" (mostrando "+limite+" de "+totalReal+")");
+        actualizarEstado("Ordenado por "+columnaSeleccionada+" ("+totalReal+" canciones)");
 
         CategoryAxis xAxis=new CategoryAxis();
         NumberAxis yAxis=new NumberAxis();
