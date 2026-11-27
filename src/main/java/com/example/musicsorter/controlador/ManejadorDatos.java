@@ -63,4 +63,32 @@ public class ManejadorDatos{
         lista.add("Arrays.parallelSort");
         return lista;
     }
+
+    public long medirTiempoNano(String algoritmo,Comparator<Cancion> comparador){
+        Cancion[] copia=canciones.toArray(new Cancion[0]);
+        long inicio=System.nanoTime();
+
+        switch(algoritmo){
+            case "QuickSort":
+                Ordenamientos.quickSort(copia,0,copia.length-1,comparador);
+                break;
+            case "ShellSort":
+                Ordenamientos.shellSort(copia,comparador);
+                break;
+            case "SeleccionDirecta":
+                Ordenamientos.seleccionDirecta(copia,comparador);
+                break;
+            case "MergeSort":
+                Ordenamientos.mergeSort(copia,0,copia.length-1,comparador);
+                break;
+            case "Arrays.sort":
+                Ordenamientos.sortJava(copia,comparador);
+                break;
+            case "Arrays.parallelSort":
+                Ordenamientos.parallelSortJava(copia,comparador);
+                break;
+        }
+
+        return System.nanoTime()-inicio;
+    }
 }

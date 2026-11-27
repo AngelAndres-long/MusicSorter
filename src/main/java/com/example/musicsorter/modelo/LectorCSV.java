@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Lee el archivo CSV y carga las canciones.
+ * Lee el archivo CSV completo (33 columnas).
  */
 public class LectorCSV{
 
@@ -16,27 +16,37 @@ public class LectorCSV{
                 LectorCSV.class.getResourceAsStream("/datos/billboard_hot_100_spotify_audio_features_enriched.csv")))){
 
             String linea;
-            br.readLine();//Saltar encabezado
-            while((linea=br.readLine())!=null){
-                String[] columnas=linea.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-                if(columnas.length>=22){
+            br.readLine();
+            int contador=0;
+            while((linea=br.readLine())!=null && contador<3000){
+                String[] c=linea.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+                if(c.length>=33){
                     try{
-                        String artista=columnas[1].trim();
-                        String cancion=columnas[2].trim();
-                        double danceability=columnas[9].trim().isEmpty()?0:Double.parseDouble(columnas[9].trim());
-                        double energy=columnas[10].trim().isEmpty()?0:Double.parseDouble(columnas[10].trim());
-                        double tempo=columnas[19].trim().isEmpty()?0:Double.parseDouble(columnas[19].trim());
-                        double popularidad=columnas[21].trim().isEmpty()?0:Double.parseDouble(columnas[21].trim());
-
-                        canciones.add(new Cancion(cancion,artista,popularidad,danceability,energy,tempo));
-                    }catch(Exception e){
-                        //Fila inválida, se omite
-                    }
+                        canciones.add(new Cancion(
+                                c[0],c[1],c[2],c[3],c[4],c[5],
+                                parseDouble(c[6]),Boolean.parseBoolean(c[7]),c[8],
+                                parseDouble(c[9]),parseDouble(c[10]),parseDouble(c[11]),
+                                parseDouble(c[12]),parseDouble(c[13]),parseDouble(c[14]),
+                                parseDouble(c[15]),parseDouble(c[16]),parseDouble(c[17]),
+                                parseDouble(c[18]),parseDouble(c[19]),parseDouble(c[20]),
+                                parseDouble(c[21]),parseDouble(c[22]),parseDouble(c[23]),
+                                c[24],c[25],c[26],c[27],c[28],c[29],c[30],c[31],parseDouble(c[32])
+                        ));
+                        contador++;
+                    }catch(Exception ignored){}
                 }
             }
         }catch(Exception e){
-            System.err.println("Error al leer el CSV: "+e.getMessage());
+            System.err.println("Error CSV: "+e.getMessage());
         }
         return canciones;
+    }
+
+    private static double parseDouble(String s){
+        try{
+            return Double.parseDouble(s.trim());
+        }catch(Exception e){
+            return 0;
+        }
     }
 }
